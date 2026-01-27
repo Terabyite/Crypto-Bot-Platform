@@ -1,1 +1,1 @@
-# Crypto-Bot-Platform
+# **Crypto-Bot-Platform**
