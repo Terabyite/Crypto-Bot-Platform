@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/Terabyite/Crypto-Bot-Platform
     targetRevision: main
-    path: apps/frontend
+    path: manifests/frontend
   destination:
     server: https://kubernetes.default.svc
     namespace: default
@@ -16,4 +16,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-      
