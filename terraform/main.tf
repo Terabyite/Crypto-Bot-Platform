@@ -53,7 +53,7 @@ resource "null_resource" "bootstrap" {
       "su - platform -c 'helm repo update'",
       "su - platform -c 'helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --set prometheus.prometheusSpec.retention=3d --set grafana.resources.requests.memory=150Mi'",
 
-      "su - platform -c 'kubectl apply -n argocd -f https://raw.githubusercontent.com/Terabyite/Crypto-Bot-Platform/main/apps/argocd/root-app.yaml'"
+      "su - platform -c 'kubectl apply -n argocd -f https://raw.githubusercontent.com/Terabyite/Crypto-Bot-Platform/main/argocd/root-app.yaml'"
     ]
   }
 }
