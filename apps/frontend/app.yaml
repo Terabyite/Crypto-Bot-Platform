@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: crypto-platform
+  name: frontend
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/Terabyite/Crypto-Bot-Platform
     targetRevision: main
-    path: apps
+    path: apps/frontend-manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: default
