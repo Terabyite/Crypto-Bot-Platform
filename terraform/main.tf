@@ -31,22 +31,29 @@ resource "null_resource" "bootstrap" {
 
       "apt update && apt install -y curl git sudo",
 
-      "su - platform -c 'curl -sfL https://get.k3s.io | sh -'",
+      "curl -sfL https://get.k3s.io | sh -",
 
+      "chmod 644 /etc/rancher/k3s/k3s.yaml",
       "mkdir -p /home/platform/.kube",
       "cp /etc/rancher/k3s/k3s.yaml /home/platform/.kube/config",
       "chown -R platform:platform /home/platform/.kube",
+
+      "su - platform -c 'until kubectl get nodes; do sleep 5; done'",
 
       "su - platform -c 'curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash'",
 
       "su - platform -c 'kubectl create namespace argocd || true'",
       "su - platform -c 'kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml'",
 
+      "su - platform -c 'until kubectl get deploy argocd-server -n argocd >/dev/null 2>&1; do sleep 5; done'",
+
       "su - platform -c 'kubectl create secret docker-registry ghcr-secret --docker-server=ghcr.io --docker-username=${var.ghcr_username} --docker-password=${var.ghcr_token} --dry-run=client -o yaml | kubectl apply -f -'",
 
       "su - platform -c 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'",
       "su - platform -c 'helm repo update'",
-      "su - platform -c 'helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --set prometheus.prometheusSpec.retention=3d --set grafana.resources.requests.memory=150Mi'"
+      "su - platform -c 'helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --set prometheus.prometheusSpec.retention=3d --set grafana.resources.requests.memory=150Mi'",
+
+      "su - platform -c 'kubectl apply -n argocd -f https://raw.githubusercontent.com/Terabyite/Crypto-Bot-Platform/main/apps/argocd/root-app.yaml'"
     ]
   }
 }
