@@ -3,6 +3,7 @@ kind: Ingress
 metadata:
   name: frontend
 spec:
+  ingressClassName: traefik
   rules:
     - http:
         paths:

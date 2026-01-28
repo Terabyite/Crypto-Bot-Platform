@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/Terabyite/Crypto-Bot-Platform
+    repoURL: https://github.com/Terabyite/Crypto-Bot-Platform.git
     targetRevision: main
     path: manifests/frontend
   destination:

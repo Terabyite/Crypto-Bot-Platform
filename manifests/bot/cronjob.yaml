@@ -1,16 +1,25 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: trading-bot
+  name: trading-bot-cron
 spec:
   schedule: "0 * * * *"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
   jobTemplate:
     spec:
+      backoffLimit: 1
       template:
         spec:
+          restartPolicy: Never
           imagePullSecrets:
             - name: ghcr-secret
           containers:
             - name: trading-bot
-              image: ghcr.io/terabyite/trading-bot:latest
-          restartPolicy: Never
+              image: ghcr.io/terabyite/cryptobot-backend:latest
+              imagePullPolicy: Always
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  curl "http://localhost:8000/api/analyze?symbol=BTCUSDT&timeframe=1h"
