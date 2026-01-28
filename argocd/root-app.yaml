@@ -5,13 +5,16 @@ metadata:
   namespace: argocd
 spec:
   project: default
+
   source:
     repoURL: https://github.com/Terabyite/Crypto-Bot-Platform
     targetRevision: main
-    path: apps
+    path: manifests
+
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: default
+
   syncPolicy:
     automated:
       prune: true
