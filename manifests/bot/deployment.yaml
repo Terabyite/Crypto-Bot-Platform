@@ -11,12 +11,15 @@ spec:
     metadata:
       labels:
         app: trading-bot
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
     spec:
       imagePullSecrets:
         - name: ghcr-secret
       containers:
         - name: trading-bot
           image: ghcr.io/terabyite/cryptobot-backend:latest
-          imagePullPolicy: Always
           ports:
             - containerPort: 8000
