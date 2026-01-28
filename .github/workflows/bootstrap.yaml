@@ -8,6 +8,20 @@ jobs:
   bootstrap:
     runs-on: ubuntu-latest
 
+    env:
+      CONTABO_CLIENT_ID: ${{ secrets.CONTABO_CLIENT_ID }}
+      CONTABO_CLIENT_SECRET: ${{ secrets.CONTABO_CLIENT_SECRET }}
+      VPS_IP: ${{ secrets.VPS_IP }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
+      ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+
     steps:
     - uses: actions/checkout@v4
 
@@ -20,13 +34,6 @@ jobs:
 
     - name: Terraform Apply
       working-directory: terraform
-      env:
-        CONTABO_CLIENT_ID: ${{ secrets.CONTABO_CLIENT_ID }}
-        CONTABO_CLIENT_SECRET: ${{ secrets.CONTABO_CLIENT_SECRET }}
-        VPS_IP: ${{ secrets.VPS_IP }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-        GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
       run: |
         echo "$SSH_PRIVATE_KEY" > key.pem
         chmod 600 key.pem
@@ -38,3 +45,29 @@ jobs:
           -var "ssh_private_key_path=key.pem" \
           -var "ghcr_username=$GHCR_USERNAME" \
           -var "ghcr_token=$GHCR_TOKEN"
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v4
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+
+    - name: Configure kubeconfig
+      run: |
+        mkdir -p ~/.kube
+        ssh -o StrictHostKeyChecking=no root@$VPS_IP "cat /etc/rancher/k3s/k3s.yaml" > ~/.kube/config
+        sed -i "s/127.0.0.1/$VPS_IP/g" ~/.kube/config
+
+    - name: Render monitoring values
+      run: |
+        envsubst < manifests/monitoring/values.yaml > /tmp/monitoring-values.yaml
+
+    - name: Deploy Prometheus & Grafana
+      run: |
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo update
+
+        helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+          --namespace monitoring \
+          --create-namespace \
+          -f /tmp/monitoring-values.yaml
