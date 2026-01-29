@@ -14,9 +14,8 @@ spec:
                 name: trading-bot
                 port:
                   number: 8000
-
           - path: /
-            pathType: Exact
+            pathType: Prefix
             backend:
               service:
                 name: frontend
