@@ -5,7 +5,8 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - http:
+    - host: 173.212.203.154.sslip.io
+      http:
         paths:
           - path: /api
             pathType: Prefix
