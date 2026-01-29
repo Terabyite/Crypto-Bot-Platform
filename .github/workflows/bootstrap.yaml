@@ -14,6 +14,13 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
+    - name: Prepare SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.VPS_IP }} >> ~/.ssh/known_hosts
+
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
@@ -24,17 +31,13 @@ jobs:
         CONTABO_CLIENT_ID: ${{ secrets.CONTABO_CLIENT_ID }}
         CONTABO_CLIENT_SECRET: ${{ secrets.CONTABO_CLIENT_SECRET }}
         VPS_IP: ${{ secrets.VPS_IP }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
         GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
       run: |
-        echo "$SSH_PRIVATE_KEY" > key.pem
-        chmod 600 key.pem
-
-        terraform apply -auto-approve \
+        terraform apply -auto-approve -parallelism=1 \
           -var "contabo_client_id=$CONTABO_CLIENT_ID" \
           -var "contabo_client_secret=$CONTABO_CLIENT_SECRET" \
           -var "vps_ip=$VPS_IP" \
-          -var "ssh_private_key_path=key.pem" \
+          -var "ssh_private_key_path=$HOME/.ssh/id_rsa" \
           -var "ghcr_username=$GHCR_USERNAME" \
           -var "ghcr_token=$GHCR_TOKEN"

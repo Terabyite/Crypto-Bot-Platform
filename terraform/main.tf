@@ -38,22 +38,17 @@ resource "null_resource" "bootstrap" {
       "cp /etc/rancher/k3s/k3s.yaml /home/platform/.kube/config",
       "chown -R platform:platform /home/platform/.kube",
 
-      "su - platform -c 'until kubectl get nodes; do sleep 5; done'",
+      "su - platform -c 'export KUBECONFIG=$HOME/.kube/config && until kubectl get nodes; do sleep 5; done'",
 
-      "su - platform -c 'curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash'",
+      "su - platform -c 'curl -s https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash'",
 
-      "su - platform -c 'kubectl create namespace argocd || true'",
-      "su - platform -c 'kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml'",
+      "su - platform -c 'export KUBECONFIG=$HOME/.kube/config && kubectl get ns argocd || kubectl create namespace argocd'",
 
-      "su - platform -c 'until kubectl get deploy argocd-server -n argocd >/dev/null 2>&1; do sleep 5; done'",
+      "su - platform -c 'export KUBECONFIG=$HOME/.kube/config && kubectl get deploy argocd-server -n argocd || kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml'",
 
-      "su - platform -c 'kubectl create secret docker-registry ghcr-secret --docker-server=ghcr.io --docker-username=${var.ghcr_username} --docker-password=${var.ghcr_token} --dry-run=client -o yaml | kubectl apply -f -'",
+      "su - platform -c 'export KUBECONFIG=$HOME/.kube/config && kubectl create secret docker-registry ghcr-secret --docker-server=ghcr.io --docker-username=${var.ghcr_username} --docker-password=${var.ghcr_token} --dry-run=client -o yaml | kubectl apply -f -'",
 
-      "su - platform -c 'helm repo add prometheus-community https://prometheus-community.github.io/helm-charts'",
-      "su - platform -c 'helm repo update'",
-      "su - platform -c 'helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring --create-namespace --set prometheus.prometheusSpec.retention=3d --set grafana.resources.requests.memory=150Mi'",
-
-      "su - platform -c 'kubectl apply -n argocd -f https://raw.githubusercontent.com/Terabyite/Crypto-Bot-Platform/main/argocd/root-app.yaml'"
+      "su - platform -c 'export KUBECONFIG=$HOME/.kube/config && kubectl apply -n argocd -f https://raw.githubusercontent.com/Terabyite/Crypto-Bot-Platform/main/argocd/root-app.yaml'"
     ]
   }
 }
