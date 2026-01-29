@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
   name: prometheus
   namespace: monitoring
-  annotations:
-    traefik.ingress.kubernetes.io/router.priority: "100"
 spec:
   ingressClassName: traefik
   rules:
@@ -14,6 +12,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: monitoring-kube-prometheus-prometheus
+                name: prometheus
                 port:
                   number: 9090
