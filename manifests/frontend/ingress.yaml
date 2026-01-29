@@ -1,9 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: crypto-platform
-  annotations:
-    traefik.ingress.kubernetes.io/router.priority: "1"
+  name: frontend
 spec:
   ingressClassName: traefik
   rules:
@@ -18,7 +16,7 @@ spec:
                   number: 8000
 
           - path: /
-            pathType: Prefix
+            pathType: Exact
             backend:
               service:
                 name: frontend

@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
   name: grafana
   namespace: monitoring
-  annotations:
-    traefik.ingress.kubernetes.io/router.priority: "100"
 spec:
   ingressClassName: traefik
   rules:
