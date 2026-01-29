@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: grafana
   namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   ingressClassName: traefik
   rules:
@@ -15,4 +17,4 @@ spec:
               service:
                 name: monitoring-grafana
                 port:
-                  number: 80
+                  number: 3000
