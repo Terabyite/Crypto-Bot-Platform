@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: crypto-platform
+  name: monitoring
   namespace: argocd
 spec:
   project: default
@@ -9,11 +9,11 @@ spec:
   source:
     repoURL: https://github.com/Terabyite/Crypto-Bot-Platform
     targetRevision: main
-    path: apps
+    path: manifests/monitoring
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: monitoring
 
   syncPolicy:
     automated:
