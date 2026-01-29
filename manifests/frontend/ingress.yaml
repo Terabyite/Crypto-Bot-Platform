@@ -7,7 +7,7 @@ spec:
   rules:
     - http:
         paths:
-          # Frontend (React)
+
           - path: /
             pathType: Prefix
             backend:
