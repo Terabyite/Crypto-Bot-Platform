@@ -10,14 +10,16 @@ data:
 
     for TOKEN in $TOKENS; do
       echo "Analyzing $TOKEN..."
-      RESPONSE=$(curl -s "$API_URL/api/analyze?symbol=$TOKEN&timeframe=1h")
-      SIGNAL=$(echo "$RESPONSE" | grep -o '"signal":"[^"]*"' | cut -d'"' -f4)
+      RESPONSE=$(curl -s "$API_URL/api/analyze?symbol=$TOKEN&interval=60")
+      BIAS=$(echo "$RESPONSE" | grep -o '"bias":"[^"]*"' | head -1 | cut -d'"' -f4)
+      CONFIDENCE=$(echo "$RESPONSE" | grep -o '"confidence":[0-9]*' | head -1 | cut -d':' -f2)
 
-      if [ "$SIGNAL" = "BUY" ] || [ "$SIGNAL" = "SELL" ]; then
-        echo "Signal detected: $SIGNAL for $TOKEN"
+      if [ "$BIAS" = "BUY" ] || [ "$BIAS" = "SELL" ]; then
+        echo "Signal detected: $BIAS for $TOKEN (confidence: $CONFIDENCE%)"
 
-        SUBJECT="Trading Alert: $SIGNAL $TOKEN"
-        BODY="Trading Signal Detected!\n\nToken: $TOKEN\nSignal: $SIGNAL\nTimeframe: 1h\nTime: $(date -u)\n\nFull Response:\n$RESPONSE"
+        REASONS=$(echo "$RESPONSE" | grep -o '"reasons":\[[^]]*\]' | head -1)
+        SUBJECT="Trading Alert: $BIAS $TOKEN (${CONFIDENCE}% confidence)"
+        BODY="Trading Signal Detected!\n\nToken: $TOKEN\nSignal: $BIAS\nConfidence: ${CONFIDENCE}%\nTimeframe: 1H\nTime: $(date -u)\n\nReasons:\n$REASONS"
 
         printf "From: Trading Bot <%s>\nTo: %s\nSubject: %s\n\n%b" \
           "$SMTP_USER" "$EMAIL_TO" "$SUBJECT" "$BODY" | \
@@ -27,7 +29,9 @@ data:
             --mail-rcpt "$EMAIL_TO" \
             --user "$SMTP_USER:$SMTP_PASS" \
             -T -
+
+        echo "Email sent for $TOKEN"
       else
-        echo "No action needed for $TOKEN (Signal: $SIGNAL)"
+        echo "No action needed for $TOKEN (Signal: $BIAS)"
       fi
     done
