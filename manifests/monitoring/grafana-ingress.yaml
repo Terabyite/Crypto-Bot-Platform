@@ -8,10 +8,9 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: grafana.173.212.203.154.sslip.io
-      http:
+    - http:
         paths:
-          - path: /
+          - path: /grafana
             pathType: Prefix
             backend:
               service:

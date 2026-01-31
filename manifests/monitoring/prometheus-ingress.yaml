@@ -8,13 +8,12 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: prometheus.173.212.203.154.sslip.io
-      http:
+    - http:
         paths:
-          - path: /
+          - path: /prometheus
             pathType: Prefix
             backend:
               service:
-                name: monitoring-kube-prometheus-prometheus
+                name: prometheus
                 port:
                   number: 9090
