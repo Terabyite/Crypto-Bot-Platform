@@ -15,7 +15,10 @@ spec:
           prometheusSpec:
             retention: 7d
         grafana:
-          adminPassword: admin
+          admin:
+            existingSecret: grafana-admin-credentials
+            userKey: admin-user
+            passwordKey: admin-password
           service:
             type: ClusterIP
   destination:
@@ -27,6 +30,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
