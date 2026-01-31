@@ -7,31 +7,83 @@ data:
     #!/bin/sh
     TOKENS="BTCUSDT ETHUSDT SOLUSDT BNBUSDT DOGEUSDT"
     API_URL="http://trading-bot.default.svc.cluster.local:8000"
+    ALERTS=""
+    ALERT_COUNT=0
 
     for TOKEN in $TOKENS; do
       echo "Analyzing $TOKEN..."
       RESPONSE=$(curl -s "$API_URL/api/analyze?symbol=$TOKEN&interval=60")
       BIAS=$(echo "$RESPONSE" | grep -o '"bias":"[^"]*"' | head -1 | cut -d'"' -f4)
-      CONFIDENCE=$(echo "$RESPONSE" | grep -o '"confidence":[0-9]*' | head -1 | cut -d':' -f2)
 
       if [ "$BIAS" = "BUY" ] || [ "$BIAS" = "SELL" ]; then
-        echo "Signal detected: $BIAS for $TOKEN (confidence: $CONFIDENCE%)"
+        ALERT_COUNT=$((ALERT_COUNT + 1))
+        CONFIDENCE=$(echo "$RESPONSE" | grep -o '"confidence":[0-9]*' | head -1 | cut -d':' -f2)
+        ENTRY=$(echo "$RESPONSE" | grep -o '"entry":[0-9.]*' | head -1 | cut -d':' -f2)
+        STOP_LOSS=$(echo "$RESPONSE" | grep -o '"stop_loss":[0-9.]*' | head -1 | cut -d':' -f2)
+        TAKE_PROFIT=$(echo "$RESPONSE" | grep -o '"take_profit":[0-9.]*' | head -1 | cut -d':' -f2)
 
-        REASONS=$(echo "$RESPONSE" | grep -o '"reasons":\[[^]]*\]' | head -1)
-        SUBJECT="Trading Alert: $BIAS $TOKEN (${CONFIDENCE}% confidence)"
-        BODY="Trading Signal Detected!\n\nToken: $TOKEN\nSignal: $BIAS\nConfidence: ${CONFIDENCE}%\nTimeframe: 1H\nTime: $(date -u)\n\nReasons:\n$REASONS"
+        TREND_1H=$(echo "$RESPONSE" | grep -o '"1H":{[^}]*}' | grep -o '"trend":"[^"]*"' | cut -d'"' -f4)
+        TREND_15M=$(echo "$RESPONSE" | grep -o '"15M":{[^}]*}' | grep -o '"trend":"[^"]*"' | cut -d'"' -f4)
+        TREND_5M=$(echo "$RESPONSE" | grep -o '"5M":{[^}]*}' | grep -o '"trend":"[^"]*"' | cut -d'"' -f4)
 
-        printf "From: Trading Bot <%s>\nTo: %s\nSubject: %s\n\n%b" \
-          "$SMTP_USER" "$EMAIL_TO" "$SUBJECT" "$BODY" | \
-          curl -s --url "smtps://$SMTP_HOST:$SMTP_PORT" \
-            --ssl-reqd \
-            --mail-from "$SMTP_USER" \
-            --mail-rcpt "$EMAIL_TO" \
-            --user "$SMTP_USER:$SMTP_PASS" \
-            -T -
+        REASONS=$(echo "$RESPONSE" | grep -o '"reasons":\[[^]]*\]' | sed 's/"reasons":\[//;s/\]//;s/","/\n  - /g;s/"//g')
 
-        echo "Email sent for $TOKEN"
+        if [ "$BIAS" = "BUY" ]; then
+          ICON="BUY"
+        else
+          ICON="SELL"
+        fi
+
+        ALERTS="${ALERTS}
+    ========================================
+    ${ICON} ${TOKEN} - ${BIAS}
+    ========================================
+    Confidence: ${CONFIDENCE}%
+
+    Trade Plan:
+      Entry:       \$${ENTRY}
+      Stop Loss:   \$${STOP_LOSS}
+      Take Profit: \$${TAKE_PROFIT}
+
+    Multi-Timeframe Bias:
+      1H:  ${TREND_1H}
+      15M: ${TREND_15M}
+      5M:  ${TREND_5M}
+
+    Reasons:
+      - ${REASONS}
+    "
+        echo "Signal: $BIAS for $TOKEN (${CONFIDENCE}%)"
       else
-        echo "No action needed for $TOKEN (Signal: $BIAS)"
+        echo "No action for $TOKEN (Signal: $BIAS)"
       fi
     done
+
+    if [ "$ALERT_COUNT" -gt 0 ]; then
+      echo "Sending email with $ALERT_COUNT alert(s)..."
+
+      SUBJECT="Trading Alert: $ALERT_COUNT signal(s) detected - $(date -u '+%b %d, %H:%M UTC')"
+
+      BODY="Crypto Trading Alerts
+    $(date -u '+%A, %B %d %Y - %H:%M UTC')
+    Timeframe: 1H Analysis
+
+    ${ALERT_COUNT} actionable signal(s) found:
+    ${ALERTS}
+    ========================================
+    This is an automated alert from your trading bot.
+    Always do your own research before trading."
+
+      printf "From: Trading Bot <%s>\nTo: %s\nSubject: %s\nContent-Type: text/plain; charset=UTF-8\n\n%b" \
+        "$SMTP_USER" "$EMAIL_TO" "$SUBJECT" "$BODY" | \
+        curl -s --url "smtps://$SMTP_HOST:$SMTP_PORT" \
+          --ssl-reqd \
+          --mail-from "$SMTP_USER" \
+          --mail-rcpt "$EMAIL_TO" \
+          --user "$SMTP_USER:$SMTP_PASS" \
+          -T -
+
+      echo "Email sent!"
+    else
+      echo "No actionable signals found. No email sent."
+    fi
