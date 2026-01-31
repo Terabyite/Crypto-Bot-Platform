@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analyzer-script
+data:
+  analyze.sh: |
+    #!/bin/sh
+    TOKENS="BTCUSDT ETHUSDT SOLUSDT BNBUSDT DOGEUSDT"
+    API_URL="http://trading-bot.default.svc.cluster.local:8000"
+
+    for TOKEN in $TOKENS; do
+      echo "Analyzing $TOKEN..."
+      RESPONSE=$(curl -s "$API_URL/api/analyze?symbol=$TOKEN&timeframe=1h")
+      SIGNAL=$(echo "$RESPONSE" | grep -o '"signal":"[^"]*"' | cut -d'"' -f4)
+
+      if [ "$SIGNAL" = "BUY" ] || [ "$SIGNAL" = "SELL" ]; then
+        echo "Signal detected: $SIGNAL for $TOKEN"
+
+        SUBJECT="Trading Alert: $SIGNAL $TOKEN"
+        BODY="Trading Signal Detected!\n\nToken: $TOKEN\nSignal: $SIGNAL\nTimeframe: 1h\nTime: $(date -u)\n\nFull Response:\n$RESPONSE"
+
+        printf "From: Trading Bot <%s>\nTo: %s\nSubject: %s\n\n%b" \
+          "$SMTP_USER" "$EMAIL_TO" "$SUBJECT" "$BODY" | \
+          curl -s --url "smtps://$SMTP_HOST:$SMTP_PORT" \
+            --ssl-reqd \
+            --mail-from "$SMTP_USER" \
+            --mail-rcpt "$EMAIL_TO" \
+            --user "$SMTP_USER:$SMTP_PASS" \
+            -T -
+      else
+        echo "No action needed for $TOKEN (Signal: $SIGNAL)"
+      fi
+    done

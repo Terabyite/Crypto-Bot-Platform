@@ -12,14 +12,41 @@ spec:
       template:
         spec:
           restartPolicy: Never
-          imagePullSecrets:
-            - name: ghcr-secret
+          volumes:
+            - name: script
+              configMap:
+                name: analyzer-script
+                defaultMode: 0755
           containers:
-            - name: trading-bot
-              image: ghcr.io/terabyite/cryptobot-backend:latest
-              imagePullPolicy: Always
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  curl "http://localhost:8000/api/analyze?symbol=BTCUSDT&timeframe=1h"
+            - name: trading-bot-analyzer
+              image: curlimages/curl:latest
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+              env:
+                - name: SMTP_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: email-credentials
+                      key: smtp-host
+                - name: SMTP_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: email-credentials
+                      key: smtp-port
+                - name: SMTP_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: email-credentials
+                      key: smtp-user
+                - name: SMTP_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: email-credentials
+                      key: smtp-pass
+                - name: EMAIL_TO
+                  valueFrom:
+                    secretKeyRef:
+                      name: email-credentials
+                      key: email-to
+              command: ["/bin/sh", "/scripts/analyze.sh"]
