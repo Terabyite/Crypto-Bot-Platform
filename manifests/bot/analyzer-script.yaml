@@ -79,7 +79,7 @@ data:
         curl -s --url "smtps://$SMTP_HOST:$SMTP_PORT" \
           --ssl-reqd \
           --mail-from "$SMTP_USER" \
-          --mail-rcpt "$EMAIL_TO" \
+          $(echo "$EMAIL_TO" | tr ',' '\n' | while read addr; do printf " --mail-rcpt %s" "$addr"; done) \
           --user "$SMTP_USER:$SMTP_PASS" \
           -T -
 
