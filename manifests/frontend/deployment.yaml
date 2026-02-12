@@ -21,7 +21,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: frontend
-          image: ghcr.io/terabyite/cryptobot-frontend:latest
+          image: ghcr.io/terabyite/cryptobot-frontend:abbed994aca2bf57c59f7f88e4336457e20b7708
           imagePullPolicy: Always
           ports:
             - containerPort: 80
