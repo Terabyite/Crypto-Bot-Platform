@@ -20,6 +20,6 @@ spec:
         - name: ghcr-secret
       containers:
         - name: trading-bot
-          image: ghcr.io/terabyite/cryptobot-backend:9bcd3d0eb1f2c4233558d1714775f61805101840
+          image: ghcr.io/terabyite/cryptobot-backend:ee96fba0b77257d30c904852be46956fb408bde5
           ports:
             - containerPort: 8000
