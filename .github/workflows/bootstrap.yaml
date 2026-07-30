@@ -3,6 +3,7 @@ name: Bootstrap Contabo Platform
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   bootstrap:
